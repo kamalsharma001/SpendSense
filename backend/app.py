@@ -10,8 +10,12 @@ def create_app():
     app = Flask(__name__)
     CORS(app, origins='*', supports_credentials=True)
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(BASE_DIR, 'expenses.db')}"
+    uri = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'expenses.db')}")
+
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'super-secret-key-change-in-prod')
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
@@ -25,12 +29,9 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    @app.route('/api/health')
-    def health():
-        return {'status': 'ok'}, 200
-
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=10000)
