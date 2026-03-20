@@ -249,7 +249,7 @@ function AuthPage({ onLogin }) {
     setError(''); setLoading(true);
     try {
       const body = tab==='login' ? { email:form.email, password:form.password } : form;
-      const data = await apiFetch(tab==='login' ? '/auth/login' : '/auth/signup', { method:'POST', body:JSON.stringify(body) });
+      const data = await apiFetch(tab==='login' ? '/api/auth/login' : '/api/auth/signup', { method:'POST', body:JSON.stringify(body) });
       localStorage.setItem('token', data.token); onLogin(data.user);
     } catch(e) { setError(e.message); }
     setLoading(false);
@@ -294,7 +294,7 @@ function ExpenseModal({ expense, onClose, onSave }) {
       clearTimeout(debounce.current);
       debounce.current = setTimeout(async () => {
         if (val.length > 2) {
-          try { const d = await apiFetch('/expenses/categorize', { method:'POST', body:JSON.stringify({ title:val }) }); setAiCat(d.category); setForm(f => ({ ...f, category:d.category })); } catch {}
+          try { const d = await apiFetch('/api/expenses/categorize', { method:'POST', body:JSON.stringify({ title:val }) }); setAiCat(d.category); setForm(f => ({ ...f, category:d.category })); } catch {}
         }
       }, 500);
     }
@@ -302,7 +302,7 @@ function ExpenseModal({ expense, onClose, onSave }) {
   const save = async () => {
     setError(''); setLoading(true);
     try {
-      const saved = await apiFetch(expense ? `/expenses/${expense.id}` : '/expenses/', { method:expense?'PUT':'POST', body:JSON.stringify({ ...form, amount:parseFloat(form.amount) }) });
+      const saved = await apiFetch(expense ? `/api/expenses/${expense.id}` : '/api/expenses/', { method:expense?'PUT':'POST', body:JSON.stringify({ ...form, amount:parseFloat(form.amount) }) });
       onSave(saved);
     } catch(e) { setError(e.message); }
     setLoading(false);
@@ -389,7 +389,7 @@ function Dashboard() {
   React.useEffect(() => {
     (async () => {
       try {
-        const [i,e] = await Promise.all([apiFetch('/expenses/insights'), apiFetch('/expenses/?')]);
+        const [i,e] = await Promise.all([apiFetch('/api/expenses/insights'), apiFetch('/api/expenses/?')]);
         setIns(i); setRecent(e.slice(0,6));
       } catch{}
       setLoading(false);
@@ -533,7 +533,7 @@ function ExpensesPage() {
       const p = new URLSearchParams();
       if (filterMonth) p.set('month', filterMonth);
       if (filterCat) p.set('category', filterCat);
-      setExpenses(await apiFetch('/expenses/?'+p));
+      setExpenses(await apiFetch('/api/expenses/?'+p));
     } catch{}
     setLoading(false);
   };
@@ -541,7 +541,7 @@ function ExpensesPage() {
 
   const handleDelete = async id => {
     if (!confirm('Delete this expense?')) return;
-    try { await apiFetch(`/expenses/${id}`, { method:'DELETE' }); setExpenses(es=>es.filter(e=>e.id!==id)); } catch{}
+    try { await apiFetch(`/api/expenses/${id}`, { method:'DELETE' }); setExpenses(es=>es.filter(e=>e.id!==id)); } catch{}
   };
   const handleSave = saved => {
     if (modal?.id) setExpenses(es=>es.map(e=>e.id===saved.id?saved:e));
@@ -607,7 +607,7 @@ function InsightsPage() {
   React.useEffect(()=>{
     (async()=>{
       setLoading(true);
-      try { const p=new URLSearchParams(); if(month)p.set('month',month); setData(await apiFetch('/expenses/insights?'+p)); } catch{}
+      try { const p=new URLSearchParams(); if(month)p.set('month',month); setData(await apiFetch('/api/expenses/insights?'+p)); } catch{}
       setLoading(false);
     })();
   },[month]);
@@ -734,7 +734,7 @@ function App() {
 
   React.useEffect(()=>{
     const token=localStorage.getItem('token');
-    if(token) apiFetch('/auth/me').then(u=>{setUser(u);setChecked(true);}).catch(()=>{localStorage.removeItem('token');setChecked(true);});
+    if(token) apiFetch('/api/auth/me').then(u=>{setUser(u);setChecked(true);}).catch(()=>{localStorage.removeItem('token');setChecked(true);});
     else setChecked(true);
   },[]);
 
