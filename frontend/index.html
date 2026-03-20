@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SpendSense — AI Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080c10;
+  --surface: #0d1117;
+  --surface2: #131920;
+  --surface3: #1a2230;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8edf3;
+  --text2: #7d8fa3;
+  --text3: #4a5568;
+  --accent: #00e5a0;
+  --accent2: #0096ff;
+  --accent3: #ff6b35;
+  --accent4: #c084fc;
+  --red: #ff4757;
+  --yellow: #ffd43b;
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Syne', sans-serif;
+}
+
+html, body, #root { height: 100%; background: var(--bg); color: var(--text); font-family: var(--display); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+/* ── AUTH ────────────────────────────────────────────────────────── */
+.auth-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.auth-wrap::before {
+  content: ''; position: absolute; width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%);
+  top: -200px; left: -200px; pointer-events: none;
+}
+.auth-wrap::after {
+  content: ''; position: absolute; width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,150,255,0.06) 0%, transparent 70%);
+  bottom: -150px; right: -150px; pointer-events: none;
+}
+.auth-card {
+  width: 420px; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 48px 40px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+  position: relative; z-index: 1; animation: fadeUp .5s ease both;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+.auth-logo {
+  font-family: var(--display); font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px;
+}
+.logo-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 12px var(--accent); display: inline-block; animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.6; transform:scale(.85); } }
+.auth-tagline { font-size: 12px; color: var(--text3); margin-bottom: 32px; font-family: var(--mono); font-weight: 300; }
+.auth-tabs { display: flex; gap: 2px; background: var(--bg); border-radius: 8px; padding: 3px; margin-bottom: 28px; }
+.auth-tab { flex: 1; padding: 9px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text2); transition: all .2s; }
+.auth-tab.active { background: var(--surface3); color: var(--text); }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--text3); margin-bottom: 7px; text-transform: uppercase; font-family: var(--mono); }
+.field input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: var(--display); background: var(--bg); color: var(--text); outline: none; transition: all .2s; }
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
+.btn-primary { width: 100%; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; font-family: var(--display); margin-top: 6px; }
+.btn-primary:hover { background: #00ffb3; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,160,0.3); }
+.btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.error-msg { background: rgba(255,71,87,0.1); color: #ff6b7a; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; border: 1px solid rgba(255,71,87,0.2); }
+
+/* ── LAYOUT ────────────────────────────────────────────────────── */
+.app-layout { display: flex; height: 100vh; }
+.sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; }
+.sidebar-logo { padding: 0 20px 24px; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.sidebar-nav { padding: 16px 10px; flex: 1; }
+.nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: .12em; color: var(--text3); padding: 0 12px; margin: 16px 0 6px; text-transform: uppercase; font-family: var(--mono); }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--text2); transition: all .15s; margin-bottom: 1px; position: relative; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent); background: rgba(0,229,160,0.08); }
+.nav-item.active::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:60%; background:var(--accent); border-radius:0 3px 3px 0; box-shadow:0 0 8px var(--accent); }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.user-chip { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent2), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #000; flex-shrink: 0; }
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-email { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
+.logout-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 4px; transition: color .2s; }
+.logout-btn:hover { color: var(--red); }
+
+.main-content { flex: 1; overflow-y: auto; background: var(--bg); }
+.page-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; background: var(--surface); position: sticky; top: 0; z-index: 9; }
+.page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.page-subtitle { font-size: 12px; color: var(--text3); margin-top: 3px; font-family: var(--mono); font-weight: 300; }
+.btn-add { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; font-family: var(--display); }
+.btn-add:hover { background: #00ffb3; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,160,0.25); }
+
+/* ── DASHBOARD ─────────────────────────────────────────────────── */
+.dash-body { padding: 24px 32px; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; position: relative; overflow: hidden; transition: all .2s; animation: fadeUp .4s ease both; }
+.stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.stat-glow { position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.15; pointer-events: none; }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; font-family: var(--mono); }
+.stat-value { font-family: var(--mono); font-size: 26px; font-weight: 500; letter-spacing: -1px; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--mono); }
+
+.charts-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 20px; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; animation: fadeUp .4s ease both; animation-delay: .15s; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.card-title { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+.card-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+.charts-row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.insights-bento2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 20px; }
+.insights-bento { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+.cat-item { margin-bottom: 13px; }
+.cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cat-name { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.cat-amount { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+.cat-bar-bg { height: 5px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 99px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+.recent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; animation: fadeUp .4s ease both; animation-delay: .2s; }
+.recent-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.exp-row { display: flex; align-items: center; gap: 14px; padding: 13px 22px; border-bottom: 1px solid var(--border); transition: background .15s; }
+.exp-row:last-child { border-bottom: none; }
+.exp-row:hover { background: var(--surface2); }
+.exp-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; border: 1px solid var(--border); }
+.exp-info { flex: 1; min-width: 0; }
+.exp-title { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exp-meta { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.exp-right { text-align: right; flex-shrink: 0; }
+.exp-amount { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--accent); }
+.exp-date { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
+.cat-pill { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; background: var(--surface3); color: var(--text2); font-family: var(--mono); }
+
+/* Sparkline */
+.sparkline { display: flex; align-items: flex-end; gap: 3px; height: 36px; margin-top: 10px; }
+.spark-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 3px; }
+
+/* ── EXPENSES PAGE ─────────────────────────────────────────────── */
+.page-body { padding: 24px 32px; }
+.filters-bar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; flex-wrap: wrap; }
+.f-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: var(--display); background: var(--surface); color: var(--text); outline: none; transition: all .2s; }
+.f-input:focus { border-color: var(--accent); }
+.f-input::placeholder { color: var(--text3); }
+select.f-input { cursor: pointer; }
+
+.exp-table { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.t-head { display: grid; grid-template-columns: 1.4fr 110px 180px 110px 90px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.th { padding: 11px 18px; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; color: var(--text3); font-family: var(--mono); }
+.t-row { display: grid; grid-template-columns: 1.4fr 110px 180px 110px 90px; border-bottom: 1px solid var(--border); transition: background .15s; }
+.t-row:last-child { border-bottom: none; }
+.t-row:hover { background: var(--surface2); }
+.td { padding: 13px 18px; font-size: 13px; display: flex; align-items: center; }
+.td.amt { color: var(--accent); font-family: var(--mono); font-weight: 500; }
+.action-btns { display: flex; gap: 5px; }
+.btn-icon { width: 28px; height: 28px; border: 1px solid var(--border); background: transparent; border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all .15s; color: var(--text2); }
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.08); }
+.btn-icon.del:hover { border-color: var(--red); color: var(--red); background: rgba(255,71,87,0.08); }
+
+/* ── MODAL ─────────────────────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(6px); animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.modal-card { background: var(--surface); border-radius: 16px; width: 480px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border2); box-shadow: 0 40px 100px rgba(0,0,0,0.7); animation: modalIn .25s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes modalIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.modal-header { padding: 24px 28px 0; display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+.modal-close { background: var(--surface2); border: 1px solid var(--border); width: 30px; height: 30px; border-radius: 8px; font-size: 16px; cursor: pointer; color: var(--text2); display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px 28px 28px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ai-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 9px; border-radius: 99px; background: rgba(0,229,160,0.1); color: var(--accent); font-weight: 600; margin-top: 6px; border: 1px solid rgba(0,229,160,0.2); font-family: var(--mono); }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px; }
+.btn-ghost { padding: 9px 18px; background: transparent; color: var(--text2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; font-family: var(--display); }
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+/* LOADER / EMPTY */
+.loader { display: flex; align-items: center; justify-content: center; height: 200px; }
+.spinner { width: 26px; height: 26px; border: 2px solid var(--surface3); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 56px 20px; }
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+.empty-title { font-size: 16px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--text3); }
+
+/* GAUGE */
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const API = 'http://localhost:5000/api';
+
+const CAT_ICONS = {
+  'Food & Dining':'🍜','Transport':'🚕','Shopping':'🛒','Healthcare':'💊',
+  'Entertainment':'🎮','Education':'📖','Bills & Utilities':'⚡','Personal Care':'🪞',
+  'Travel':'✈️','Investments':'📊','Gifts & Donations':'🎁','Other':'📦'
+};
+const CATS = Object.keys(CAT_ICONS);
+const PALETTE = ['#00e5a0','#0096ff','#ff6b35','#c084fc','#ffd43b','#ff4757','#06d6a0','#118ab2','#f4a261','#e76f51','#a8dadc','#457b9d'];
+
+const apiFetch = async (path, opts = {}) => {
+  const token = localStorage.getItem('token');
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    ...opts
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+};
+
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+const fmtShort = n => n >= 100000 ? '₹'+(n/100000).toFixed(1)+'L' : n >= 1000 ? '₹'+(n/1000).toFixed(1)+'k' : '₹'+Number(n).toFixed(0);
+const fmtDate = d => new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+
+Chart.defaults.color = '#4a5568';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'JetBrains Mono'";
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function AuthPage({ onLogin }) {
+  const [tab, setTab] = React.useState('login');
+  const [form, setForm] = React.useState({ name:'', email:'', password:'' });
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+  const submit = async () => {
+    setError(''); setLoading(true);
+    try {
+      const body = tab==='login' ? { email:form.email, password:form.password } : form;
+      const data = await apiFetch(tab==='login' ? '/auth/login' : '/auth/signup', { method:'POST', body:JSON.stringify(body) });
+      localStorage.setItem('token', data.token); onLogin(data.user);
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-logo"><div className="logo-dot"/> SpendSense</div>
+        <div className="auth-tagline">// ai-powered finance intelligence</div>
+        <div className="auth-tabs">
+          {['login','signup'].map(t => <div key={t} className={`auth-tab ${tab===t?'active':''}`} onClick={()=>{setTab(t);setError('');}}>
+            {t==='login'?'Sign In':'Create Account'}
+          </div>)}
+        </div>
+        {error && <div className="error-msg">{error}</div>}
+        {tab==='signup' && <div className="field"><label>Full Name</label><input value={form.name} onChange={set('name')} placeholder="Jane Doe" onKeyDown={e=>e.key==='Enter'&&submit()} /></div>}
+        <div className="field"><label>Email</label><input type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+        <div className="field"><label>Password</label><input type="password" value={form.password} onChange={set('password')} placeholder="••••••••" onKeyDown={e=>e.key==='Enter'&&submit()} /></div>
+        <button className="btn-primary" onClick={submit} disabled={loading}>{loading?'Please wait…':tab==='login'?'Sign In →':'Create Account →'}</button>
+      </div>
+    </div>
+  );
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function ExpenseModal({ expense, onClose, onSave }) {
+  const today = new Date().toISOString().split('T')[0];
+  const [form, setForm] = React.useState(expense
+    ? { title:expense.title, amount:expense.amount, category:expense.category, date:expense.date, notes:expense.notes||'' }
+    : { title:'', amount:'', category:'', date:today, notes:'' });
+  const [aiCat, setAiCat] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const debounce = React.useRef();
+
+  const inStyle = { background:'var(--bg)', border:'1px solid var(--border)', borderRadius:8, padding:'10px 14px', width:'100%', color:'var(--text)', fontSize:13, fontFamily:'var(--display)', outline:'none' };
+
+  const set = k => e => {
+    const val = e.target.value;
+    setForm(f => ({ ...f, [k]: val }));
+    if (k === 'title') {
+      clearTimeout(debounce.current);
+      debounce.current = setTimeout(async () => {
+        if (val.length > 2) {
+          try { const d = await apiFetch('/expenses/categorize', { method:'POST', body:JSON.stringify({ title:val }) }); setAiCat(d.category); setForm(f => ({ ...f, category:d.category })); } catch {}
+        }
+      }, 500);
+    }
+  };
+  const save = async () => {
+    setError(''); setLoading(true);
+    try {
+      const saved = await apiFetch(expense ? `/expenses/${expense.id}` : '/expenses/', { method:expense?'PUT':'POST', body:JSON.stringify({ ...form, amount:parseFloat(form.amount) }) });
+      onSave(saved);
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="modal-overlay" onClick={e=>e.target.className==='modal-overlay'&&onClose()}>
+      <div className="modal-card">
+        <div className="modal-header">
+          <div className="modal-title">{expense?'Edit Expense':'New Expense'}</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          {error && <div className="error-msg" style={{marginBottom:14}}>{error}</div>}
+          <div className="field">
+            <label>Title</label>
+            <input value={form.title} onChange={set('title')} placeholder="e.g. Zomato dinner" style={inStyle} />
+            {aiCat && !expense && <div className="ai-chip">✦ ML suggested: {aiCat}</div>}
+          </div>
+          <div className="form-row">
+            <div className="field"><label>Amount (₹)</label><input type="number" value={form.amount} onChange={set('amount')} placeholder="0.00" style={{...inStyle,fontFamily:'var(--mono)'}} /></div>
+            <div className="field"><label>Date</label><input type="date" value={form.date} onChange={set('date')} style={{...inStyle,colorScheme:'dark'}} /></div>
+          </div>
+          <div className="field">
+            <label>Category</label>
+            <select value={form.category} onChange={set('category')} style={inStyle}>
+              <option value="">Auto-detect</option>
+              {CATS.map(c=><option key={c} value={c}>{CAT_ICONS[c]} {c}</option>)}
+              <option value="Other">📦 Other</option>
+            </select>
+          </div>
+          <div className="field"><label>Notes</label><input value={form.notes} onChange={set('notes')} placeholder="Optional…" style={inStyle} /></div>
+          <div className="modal-footer">
+            <button className="btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn-primary" style={{width:'auto',padding:'9px 22px'}} onClick={save} disabled={loading}>{loading?'Saving…':expense?'Save Changes':'Add Expense'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SPARKLINE ─────────────────────────────────────────────────────────────────
+function Sparkline({ data, color }) {
+  if (!data || data.length === 0) return null;
+  const max = Math.max(...data, 1);
+  return (
+    <div className="sparkline">
+      {data.map((v,i) => <div key={i} className="spark-bar" style={{ height:(v/max*100)+'%', background:color, opacity:i===data.length-1?1:0.35 }} />)}
+    </div>
+  );
+}
+
+// ── GAUGE ─────────────────────────────────────────────────────────────────────
+function Gauge({ value, max, color, label }) {
+  const pct = Math.min(value/(max||1), 1);
+  const r=54, cx=70, cy=72;
+  const start=Math.PI*0.78, end=Math.PI*2.22;
+  const angle = start + pct*(end-start);
+  const x1=cx+r*Math.cos(start), y1=cy+r*Math.sin(start);
+  const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end);
+  const px=cx+r*Math.cos(angle), py=cy+r*Math.sin(angle);
+  const large1=end-start>Math.PI?1:0;
+  const large2=angle-start>Math.PI?1:0;
+  return (
+    <div className="gauge-wrap">
+      <svg width="140" height="110">
+        <path d={`M${x1},${y1} A${r},${r} 0 ${large1} 1 ${x2},${y2}`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round"/>
+        {pct>0&&<path d={`M${x1},${y1} A${r},${r} 0 ${large2} 1 ${px},${py}`} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" style={{filter:`drop-shadow(0 0 6px ${color})`}}/>}
+        <text x={cx} y={cy+8} textAnchor="middle" style={{fontSize:18,fontFamily:'var(--mono)',fill:'var(--text)',fontWeight:500}}>{fmtShort(value)}</text>
+        <text x={cx} y={cy+24} textAnchor="middle" style={{fontSize:10,fontFamily:'var(--mono)',fill:'var(--text3)'}}>{label}</text>
+      </svg>
+    </div>
+  );
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dashboard() {
+  const [ins, setIns] = React.useState(null);
+  const [recent, setRecent] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const donutRef=React.useRef(), donutInst=React.useRef();
+  const lineRef=React.useRef(), lineInst=React.useRef();
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const [i,e] = await Promise.all([apiFetch('/expenses/insights'), apiFetch('/expenses/?')]);
+        setIns(i); setRecent(e.slice(0,6));
+      } catch{}
+      setLoading(false);
+    })();
+  }, []);
+
+  React.useEffect(() => {
+    if (!ins) return;
+    if (donutRef.current) {
+      if (donutInst.current) donutInst.current.destroy();
+      const top=ins.by_category.slice(0,7);
+      donutInst.current = new Chart(donutRef.current, {
+        type:'doughnut',
+        data:{ labels:top.map(c=>c.category), datasets:[{ data:top.map(c=>c.amount), backgroundColor:PALETTE, borderWidth:0, hoverOffset:10 }] },
+        options:{ cutout:'68%', plugins:{ legend:{ position:'right', labels:{ color:'#7d8fa3', font:{family:"'JetBrains Mono'",size:10}, padding:10, boxWidth:10, boxHeight:10, usePointStyle:true, pointStyle:'circle' } } }, animation:{ animateScale:true, duration:800 } }
+      });
+    }
+    if (lineRef.current) {
+      if (lineInst.current) lineInst.current.destroy();
+      lineInst.current = new Chart(lineRef.current, {
+        type:'line',
+        data:{ labels:ins.monthly.map(m=>m.month), datasets:[{ label:'Spending', data:ins.monthly.map(m=>m.amount), borderColor:'#00e5a0', backgroundColor:'rgba(0,229,160,0.06)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#00e5a0', pointRadius:4 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>fmtShort(v),color:'#4a5568'}}, x:{grid:{display:false},ticks:{color:'#4a5568'}} } }
+      });
+    }
+  }, [ins]);
+
+  if (loading) return <div className="loader"><div className="spinner"/></div>;
+  const monthly=ins?.monthly?.map(m=>m.amount)||[];
+  const lastM=monthly.slice(-1)[0]||0, prevM=monthly.slice(-2,-1)[0]||0;
+  const chg=prevM>0?((lastM-prevM)/prevM*100).toFixed(1):0;
+  const avgM=monthly.length>0?monthly.reduce((a,b)=>a+b,0)/monthly.length:0;
+
+  return (
+    <div className="dash-body">
+      <div className="stats-row">
+        {[
+          { label:'Total Spent', value:fmtShort(ins?.total||0), color:'#00e5a0', spark:monthly },
+          { label:'This Month', value:fmtShort(lastM), color:'#0096ff', sub:chg!=0?`${chg>0?'+':''}${chg}% vs prev`:'First month' },
+          { label:'Transactions', value:ins?.count||0, color:'#c084fc', sub:'Total entries' },
+          { label:'Monthly Avg', value:fmtShort(avgM), color:'#ff6b35', sub:`${monthly.length} months data` },
+        ].map((s,i) => (
+          <div className="stat-card" key={i} style={{animationDelay:i*0.05+'s'}}>
+            <div className="stat-glow" style={{background:`radial-gradient(circle, ${s.color} 0%, transparent 70%)`}}/>
+            <div className="stat-label">{s.label}</div>
+            <div className="stat-value" style={{color:s.color}}>{s.value}</div>
+            {s.sub && <div className="stat-sub">{s.sub}</div>}
+            {s.spark && <Sparkline data={s.spark.slice(-8)} color={s.color}/>}
+          </div>
+        ))}
+      </div>
+
+      <div className="charts-grid">
+        <div className="chart-card">
+          <div className="card-header"><div className="card-title">Monthly Trend</div><div className="card-meta">{ins?.monthly?.length||0} months</div></div>
+          {ins?.monthly?.length>0 ? <canvas ref={lineRef} height="160"/> : <div className="empty-state"><div className="empty-icon">📈</div><div className="empty-title">No data yet</div></div>}
+        </div>
+        <div className="chart-card">
+          <div className="card-header"><div className="card-title">Category Split</div><div className="card-meta">{ins?.by_category?.length||0} cats</div></div>
+          {ins?.by_category?.length>0 ? <canvas ref={donutRef} height="200"/> : <div className="empty-state"><div className="empty-icon">🍩</div><div className="empty-title">No data yet</div></div>}
+        </div>
+      </div>
+
+      <div className="charts-row2">
+        <div className="chart-card">
+          <div className="card-header"><div className="card-title">Top Categories</div></div>
+          {ins?.by_category?.slice(0,6).map((c,i) => (
+            <div className="cat-item" key={c.category}>
+              <div className="cat-header">
+                <span className="cat-name"><span>{CAT_ICONS[c.category]||'📦'}</span>{c.category}</span>
+                <span className="cat-amount">{fmt(c.amount)} · {c.percent}%</span>
+              </div>
+              <div className="cat-bar-bg"><div className="cat-bar-fill" style={{width:c.percent+'%',background:PALETTE[i%PALETTE.length],boxShadow:`0 0 8px ${PALETTE[i%PALETTE.length]}50`}}/></div>
+            </div>
+          ))}
+        </div>
+        <div className="chart-card">
+          <div className="card-header"><div className="card-title">Budget Gauge</div></div>
+          <Gauge value={lastM} max={avgM*1.5||10000} color="#00e5a0" label="vs avg" />
+          {ins?.by_category?.slice(0,3).map((c,i) => (
+            <div key={c.category} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--border)',fontSize:12}}>
+              <span style={{color:'var(--text2)'}}>{CAT_ICONS[c.category]} {c.category}</span>
+              <span style={{fontFamily:'var(--mono)',color:PALETTE[i]}}>{fmt(c.amount)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="chart-card">
+          <div className="card-header"><div className="card-title">Quick Stats</div></div>
+          <div style={{textAlign:'center',padding:'12px 0'}}>
+            <div style={{fontFamily:'var(--mono)',fontSize:28,color:'var(--accent4)',letterSpacing:'-1px'}}>{fmtShort((ins?.total||0)/Math.max(ins?.count||1,1))}</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:4,fontFamily:'var(--mono)'}}>per transaction</div>
+          </div>
+          {[
+            {label:'Categories', val:ins?.by_category?.length||0, color:'var(--accent4)'},
+            {label:'Top category', val:ins?.by_category?.[0]?.category||'—', color:'var(--accent)'},
+            {label:'Highest month', val:monthly.length>0?fmtShort(Math.max(...monthly)):'—', color:'var(--red)'},
+          ].map(r => (
+            <div key={r.label} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'7px 0',borderBottom:'1px solid var(--border)'}}>
+              <span style={{color:'var(--text2)'}}>{r.label}</span>
+              <span style={{fontFamily:'var(--mono)',color:r.color}}>{r.val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="recent-card">
+        <div className="recent-header"><div className="card-title">Recent Transactions</div><div className="card-meta">{recent.length} shown</div></div>
+        {recent.length===0
+          ? <div className="empty-state"><div className="empty-icon">📝</div><div className="empty-title">No expenses yet</div><div className="empty-sub">Add your first expense to get started</div></div>
+          : recent.map(e => (
+            <div className="exp-row" key={e.id}>
+              <div className="exp-icon">{CAT_ICONS[e.category]||'📦'}</div>
+              <div className="exp-info">
+                <div className="exp-title">{e.title}</div>
+                <div className="exp-meta"><span className="cat-pill">{e.category}</span></div>
+              </div>
+              <div className="exp-right">
+                <div className="exp-amount">{fmt(e.amount)}</div>
+                <div className="exp-date">{fmtDate(e.date)}</div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+// ── EXPENSES PAGE ─────────────────────────────────────────────────────────────
+function ExpensesPage() {
+  const [expenses, setExpenses] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [modal, setModal] = React.useState(null);
+  const [search, setSearch] = React.useState('');
+  const [filterCat, setFilterCat] = React.useState('');
+  const [filterMonth, setFilterMonth] = React.useState('');
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const p = new URLSearchParams();
+      if (filterMonth) p.set('month', filterMonth);
+      if (filterCat) p.set('category', filterCat);
+      setExpenses(await apiFetch('/expenses/?'+p));
+    } catch{}
+    setLoading(false);
+  };
+  React.useEffect(() => { load(); }, [filterMonth, filterCat]);
+
+  const handleDelete = async id => {
+    if (!confirm('Delete this expense?')) return;
+    try { await apiFetch(`/expenses/${id}`, { method:'DELETE' }); setExpenses(es=>es.filter(e=>e.id!==id)); } catch{}
+  };
+  const handleSave = saved => {
+    if (modal?.id) setExpenses(es=>es.map(e=>e.id===saved.id?saved:e));
+    else setExpenses(es=>[saved,...es]);
+    setModal(null);
+  };
+  const filtered = expenses.filter(e => !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase()));
+  const total = filtered.reduce((a,e)=>a+e.amount,0);
+
+  return (
+    <div className="page-body">
+      <div className="filters-bar">
+        <input className="f-input" style={{flex:1,minWidth:200}} placeholder="🔍  Search expenses…" value={search} onChange={e=>setSearch(e.target.value)} />
+        <select className="f-input" value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
+          <option value="">All Categories</option>
+          {CATS.map(c=><option key={c} value={c}>{CAT_ICONS[c]} {c}</option>)}
+        </select>
+        <input className="f-input" type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} style={{colorScheme:'dark'}} />
+        <button className="btn-add" onClick={()=>setModal('add')}>+ Add Expense</button>
+      </div>
+      {filtered.length>0&&(
+        <div style={{display:'flex',gap:16,marginBottom:14,padding:'10px 16px',background:'var(--surface)',borderRadius:10,border:'1px solid var(--border)',alignItems:'center',fontSize:12}}>
+          <span style={{color:'var(--text3)',fontFamily:'var(--mono)'}}>{filtered.length} transactions</span>
+          <span style={{color:'var(--text3)'}}>·</span>
+          <span style={{fontFamily:'var(--mono)',color:'var(--accent)'}}>Total: {fmt(total)}</span>
+          <span style={{color:'var(--text3)'}}>·</span>
+          <span style={{fontFamily:'var(--mono)',color:'var(--text2)'}}>Avg: {fmt(total/filtered.length)}</span>
+        </div>
+      )}
+      {loading ? <div className="loader"><div className="spinner"/></div>
+        : filtered.length===0 ? <div className="empty-state"><div className="empty-icon">🧾</div><div className="empty-title">No expenses found</div><div className="empty-sub">Try adjusting your filters</div></div>
+        : (
+          <div className="exp-table">
+            <div className="t-head">
+              {['Title','Amount','Category','Date','Actions'].map(h=><div key={h} className="th">{h}</div>)}
+            </div>
+            {filtered.map(e=>(
+              <div className="t-row" key={e.id}>
+                <div className="td" style={{fontWeight:600}}>{e.title}</div>
+                <div className="td amt">{fmt(e.amount)}</div>
+                <div className="td"><span className="cat-pill">{CAT_ICONS[e.category]||'📦'} {e.category}</span></div>
+                <div className="td" style={{fontFamily:'var(--mono)',color:'var(--text3)',fontSize:12}}>{fmtDate(e.date)}</div>
+                <div className="td"><div className="action-btns"><button className="btn-icon" onClick={()=>setModal(e)}>✏️</button><button className="btn-icon del" onClick={()=>handleDelete(e.id)}>🗑</button></div></div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+      {modal&&<ExpenseModal expense={modal==='add'?null:modal} onClose={()=>setModal(null)} onSave={handleSave}/>}
+    </div>
+  );
+}
+
+// ── INSIGHTS PAGE ─────────────────────────────────────────────────────────────
+function InsightsPage() {
+  const [month, setMonth] = React.useState('');
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const barRef=React.useRef(), barInst=React.useRef();
+  const radarRef=React.useRef(), radarInst=React.useRef();
+  const hbarRef=React.useRef(), hbarInst=React.useRef();
+
+  React.useEffect(()=>{
+    (async()=>{
+      setLoading(true);
+      try { const p=new URLSearchParams(); if(month)p.set('month',month); setData(await apiFetch('/expenses/insights?'+p)); } catch{}
+      setLoading(false);
+    })();
+  },[month]);
+
+  React.useEffect(()=>{
+    if(!data)return;
+    if(barRef.current){
+      if(barInst.current)barInst.current.destroy();
+      barInst.current=new Chart(barRef.current,{
+        type:'bar',
+        data:{ labels:data.monthly.map(m=>m.month), datasets:[{ label:'₹ Spent', data:data.monthly.map(m=>m.amount), backgroundColor:data.monthly.map((_,i)=>i===data.monthly.length-1?'#00e5a0':'rgba(0,229,160,0.3)'), borderRadius:6, borderSkipped:false }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>fmtShort(v),color:'#4a5568'}}, x:{grid:{display:false},ticks:{color:'#4a5568'}} } }
+      });
+    }
+    if(radarRef.current&&data.by_category.length>0){
+      if(radarInst.current)radarInst.current.destroy();
+      const top=data.by_category.slice(0,7);
+      radarInst.current=new Chart(radarRef.current,{
+        type:'radar',
+        data:{ labels:top.map(c=>c.category.split(' ')[0]), datasets:[{ label:'Spending', data:top.map(c=>c.amount), backgroundColor:'rgba(0,229,160,0.1)', borderColor:'#00e5a0', borderWidth:2, pointBackgroundColor:'#00e5a0', pointRadius:4 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ r:{ angleLines:{color:'rgba(255,255,255,0.05)'}, grid:{color:'rgba(255,255,255,0.05)'}, pointLabels:{color:'#7d8fa3',font:{size:10}}, ticks:{display:false} } } }
+      });
+    }
+    if(hbarRef.current&&data.by_category.length>0){
+      if(hbarInst.current)hbarInst.current.destroy();
+      hbarInst.current=new Chart(hbarRef.current,{
+        type:'bar',
+        data:{ labels:data.by_category.slice(0,8).map(c=>c.category), datasets:[{ label:'Amount', data:data.by_category.slice(0,8).map(c=>c.amount), backgroundColor:PALETTE.slice(0,8), borderRadius:4, borderSkipped:false }] },
+        options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{callback:v=>fmtShort(v),color:'#4a5568'}}, y:{grid:{display:false},ticks:{color:'#7d8fa3',font:{size:11}}} } }
+      });
+    }
+  },[data]);
+
+  const avg=data?.monthly?.length>0?data.monthly.reduce((a,m)=>a+m.amount,0)/data.monthly.length:0;
+  const topCat=data?.by_category?.[0];
+  const maxMonth=data?.monthly?.length>0?data.monthly.reduce((a,b)=>a.amount>b.amount?a:b,{amount:0}):null;
+
+  return (
+    <div className="page-body">
+      <div style={{display:'flex',gap:10,marginBottom:20,alignItems:'center'}}>
+        <span style={{fontSize:12,color:'var(--text3)',fontFamily:'var(--mono)'}}>Filter month:</span>
+        <input className="f-input" type="month" value={month} onChange={e=>setMonth(e.target.value)} style={{colorScheme:'dark'}}/>
+        {month&&<button className="btn-ghost" style={{padding:'7px 12px',fontSize:12}} onClick={()=>setMonth('')}>Clear</button>}
+      </div>
+      {loading ? <div className="loader"><div className="spinner"/></div> : (
+        <>
+          <div className="stats-row" style={{marginBottom:20}}>
+            {[
+              {label:'Total',value:fmtShort(data?.total||0),color:'#00e5a0'},
+              {label:'Transactions',value:data?.count||0,color:'#0096ff'},
+              {label:'Monthly Avg',value:fmtShort(avg),color:'#c084fc'},
+              {label:'Peak Month',value:maxMonth?.month||'—',color:'#ff6b35',sub:maxMonth?fmtShort(maxMonth.amount):''},
+            ].map((s,i)=>(
+              <div className="stat-card" key={i}>
+                <div className="stat-glow" style={{background:`radial-gradient(circle, ${s.color} 0%, transparent 70%)`}}/>
+                <div className="stat-label">{s.label}</div>
+                <div className="stat-value" style={{color:s.color,fontSize:22}}>{s.value}</div>
+                {s.sub&&<div className="stat-sub">{s.sub}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div className="insights-bento2">
+            <div className="chart-card">
+              <div className="card-header"><div className="card-title">Monthly Spending</div><div className="card-meta">bar chart</div></div>
+              {data?.monthly?.length>0?<canvas ref={barRef} height="200"/>:<div className="empty-state"><div className="empty-icon">📊</div><div className="empty-title">No data</div></div>}
+            </div>
+            <div className="chart-card">
+              <div className="card-header"><div className="card-title">Spending Radar</div><div className="card-meta">by category</div></div>
+              {data?.by_category?.length>0?<canvas ref={radarRef} height="200"/>:<div className="empty-state"><div className="empty-icon">🕸️</div><div className="empty-title">No data</div></div>}
+            </div>
+          </div>
+
+          <div className="insights-bento">
+            <div className="chart-card">
+              <div className="card-header"><div className="card-title">Category Comparison</div><div className="card-meta">horizontal bar</div></div>
+              {data?.by_category?.length>0?<canvas ref={hbarRef} height="220"/>:<div className="empty-state"><div className="empty-icon">📋</div><div className="empty-title">No data</div></div>}
+            </div>
+            <div className="chart-card">
+              <div className="card-header"><div className="card-title">Category Detail</div><div className="card-meta">{data?.by_category?.length||0} active</div></div>
+              <div style={{maxHeight:280,overflowY:'auto'}}>
+                {data?.by_category?.map((c,i)=>(
+                  <div key={c.category} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 0',borderBottom:'1px solid var(--border)'}}>
+                    <span style={{fontSize:18,width:24}}>{CAT_ICONS[c.category]||'📦'}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:600,marginBottom:4}}>{c.category}</div>
+                      <div className="cat-bar-bg"><div className="cat-bar-fill" style={{width:c.percent+'%',background:PALETTE[i%PALETTE.length]}}/></div>
+                    </div>
+                    <div style={{textAlign:'right',flexShrink:0}}>
+                      <div style={{fontFamily:'var(--mono)',fontSize:12,color:PALETTE[i%PALETTE.length]}}>{fmt(c.amount)}</div>
+                      <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text3)'}}>{c.percent}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {topCat&&(
+            <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:'20px 24px',display:'flex',alignItems:'center',gap:20}}>
+              <div style={{fontSize:40}}>{CAT_ICONS[topCat.category]||'📦'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginBottom:4}}>TOP SPENDING CATEGORY</div>
+                <div style={{fontSize:20,fontWeight:800,letterSpacing:'-0.3px'}}>{topCat.category}</div>
+                <div style={{fontSize:12,color:'var(--text3)',marginTop:4}}>You spend {topCat.percent}% of your budget here</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:28,color:'var(--accent)',letterSpacing:'-1px'}}>{fmt(topCat.amount)}</div>
+                <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginTop:4}}>total spent</div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [user, setUser] = React.useState(null);
+  const [page, setPage] = React.useState('dashboard');
+  const [checked, setChecked] = React.useState(false);
+
+  React.useEffect(()=>{
+    const token=localStorage.getItem('token');
+    if(token) apiFetch('/auth/me').then(u=>{setUser(u);setChecked(true);}).catch(()=>{localStorage.removeItem('token');setChecked(true);});
+    else setChecked(true);
+  },[]);
+
+  const logout = () => { localStorage.removeItem('token'); setUser(null); setPage('dashboard'); };
+
+  if (!checked) return <div className="loader"><div className="spinner"/></div>;
+  if (!user) return <AuthPage onLogin={u=>setUser(u)}/>;
+
+  const nav = [
+    {id:'dashboard',icon:'◉',label:'Dashboard'},
+    {id:'expenses',icon:'◈',label:'Expenses'},
+    {id:'insights',icon:'◆',label:'Insights'},
+  ];
+
+  return (
+    <div className="app-layout">
+      <div className="sidebar">
+        <div className="sidebar-logo"><div className="logo-dot"/>SpendSense</div>
+        <div className="sidebar-nav">
+          <div className="nav-section-label">Navigation</div>
+          {nav.map(n=>(
+            <div key={n.id} className={`nav-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+              <span className="nav-icon">{n.icon}</span>{n.label}
+            </div>
+          ))}
+          <div className="nav-section-label" style={{marginTop:24}}>Quick Actions</div>
+          <div className="nav-item" onClick={()=>setPage('expenses')} style={{color:'var(--accent)'}}>
+            <span className="nav-icon">＋</span>Add Expense
+          </div>
+        </div>
+        <div className="sidebar-footer">
+          <div className="user-chip">
+            <div className="user-avatar">{user.name?.[0]?.toUpperCase()}</div>
+            <div className="user-info">
+              <div className="user-name">{user.name}</div>
+              <div className="user-email">{user.email}</div>
+            </div>
+            <button className="logout-btn" onClick={logout} title="Sign out">⏻</button>
+          </div>
+        </div>
+      </div>
+      <div className="main-content">
+        <div className="page-header">
+          <div>
+            <div className="page-title">{{dashboard:'Dashboard',expenses:'Expenses',insights:'Insights'}[page]}</div>
+            <div className="page-subtitle">// {new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+          </div>
+          {page==='dashboard'&&<button className="btn-add" onClick={()=>setPage('expenses')}>+ Add Expense</button>}
+        </div>
+        {page==='dashboard'&&<Dashboard/>}
+        {page==='expenses'&&<ExpensesPage/>}
+        {page==='insights'&&<InsightsPage/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
