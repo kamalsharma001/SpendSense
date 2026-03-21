@@ -18,16 +18,16 @@ The application is fully deployed and accessible through the live demo links abo
 ## 📸 Screenshots
 
 ### 🔐 Authentication Page
-![Auth](screenshots/auth.png)
+![Auth](screenshots/Auth.png)
 
 ### 📊 Dashboard
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/Dashboard.png)
 
 ### 🧾 Expenses Page
-![Expenses](screenshots/expenses.png)
+![Expenses](screenshots/Expenses.png)
 
 ### 📈 Insights
-![Insights](screenshots/insights.png)
+![Insights](screenshots/Insights.png)
 
 ---
 
