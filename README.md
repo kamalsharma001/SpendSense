@@ -1,215 +1,325 @@
-# SpendSense — AI Powered Expense Tracker
+# 💰 SpendSense — AI Expense Tracker
 
-A full-stack expense tracking application with AI-powered automatic categorization, built with Flask + SQLite backend and a React frontend.
+An AI-assisted expense tracking system with intelligent categorization and real-time financial insights.
 
----
-
-## Project Structure
-
-```
-ai-expense-tracker/
-├── backend/
-│   ├── app.py                  # Flask application entry point
-│   ├── requirements.txt        # Python dependencies
-│   ├── expenses.db             # SQLite database (auto-created on first run)
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── models.py           # SQLAlchemy User & Expense models
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── auth.py             # Signup, login endpoints
-│   │   └── expenses.py         # CRUD + insights endpoints
-│   └── utils/
-│       ├── __init__.py
-│       └── categorizer.py      # Rule-based AI categorizer
-│
-└── frontend/
-    └── index.html              # Single-file React app (CDN-based)
-```
+SpendSense is a full-stack AI-assisted expense tracking application that helps users manage and analyze their finances intelligently. It combines machine learning with interactive dashboards to provide automatic expense categorization and meaningful insights into spending habits.
 
 ---
 
-## Prerequisites
+## 🚀 Live Demo
 
-- Python 3.8+
-- A modern web browser (Chrome, Firefox, Edge)
-- No Node.js required (frontend uses CDN)
+🌐 **Frontend:** [SpendSense App](https://spendsense-xyz.netlify.app)  
+🔗 **Backend API:** [API Endpoint](https://spendsense-backend-hinw.onrender.com)
 
----
-
-## Setup & Run
-
-### 1. Clone / Download the project
-
-```bash
-cd ai-expense-tracker
-```
-
-### 2. Set up the Python backend
-
-```bash
-cd backend
-
-# Create a virtual environment
-python3 -m venv venv
-
-# Activate it
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Start the backend server
-
-```bash
-# Still inside backend/ with venv activated
-python app.py
-```
-
-You should see:
-```
- * Running on http://127.0.0.1:5000
-```
-
-The SQLite database (`expenses.db`) is created automatically on first run.
-
-### 4. Open the frontend
-
-Open a new terminal window and serve the frontend:
-
-```bash
-cd ai-expense-tracker/frontend
-
-# Using Python's built-in server (recommended):
-python3 -m http.server 3000
-```
-
-Then open your browser and go to: **http://localhost:3000**
-
-> Alternatively, you can just double-click `frontend/index.html` to open it directly in your browser — it will work as long as the backend is running on port 5000.
+The application is fully deployed and accessible through the live demo links above.
 
 ---
 
-## REST API Reference
+## 📸 Screenshots
 
-All endpoints require `Authorization: Bearer <token>` header except `/api/auth/*`.
+### 🔐 Authentication Page
+![Auth](screenshots/auth.png)
 
-### Auth
+### 📊 Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### 🧾 Expenses Page
+![Expenses](screenshots/expenses.png)
+
+### 📈 Insights
+![Insights](screenshots/insights.png)
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- HTML  
+- CSS  
+- JavaScript  
+- React (CDN)  
+- Chart.js  
+
+### Backend
+- Python (Flask)  
+- REST API architecture  
+- JWT Authentication  
+
+### Database
+- PostgreSQL (Render — Production)  
+- SQLite (Local Development)  
+
+### Machine Learning
+- Scikit-learn  
+- TF-IDF Vectorizer  
+- Naive Bayes Classifier  
+
+---
+
+## ✨ Features
+
+- 🔐 User Authentication (Signup / Login)  
+- 💰 Add, Edit, Delete Expenses  
+- 🔎 Search & Filter Expenses  
+- 🤖 AI-assisted Expense Categorization  
+- 📊 Interactive Dashboard & Charts  
+- 📈 Spending Insights & Analytics  
+- ☁️ Fully Deployed (Frontend + Backend + Database)  
+
+---
+## 🔌 REST API Overview
+
+All endpoints require the header:
+
+```
+Authorization: Bearer <token>
+```
+
+except authentication routes.
+
+---
+
+### 🔐 Authentication
+
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|------|------|------|
 | POST | `/api/auth/signup` | Register a new user |
-| POST | `/api/auth/login` | Login and get JWT token |
+| POST | `/api/auth/login` | Login and receive JWT token |
 
-**Signup body:**
+Example signup request:
+
 ```json
-{ "name": "Jane", "email": "jane@example.com", "password": "secret123" }
+{
+  "name": "Jane",
+  "email": "jane@example.com",
+  "password": "secret123"
+}
 ```
 
-**Login body:**
+Example login request:
+
 ```json
-{ "email": "jane@example.com", "password": "secret123" }
+{
+  "email": "jane@example.com",
+  "password": "secret123"
+}
 ```
 
-**Response:**
+Example response:
+
 ```json
-{ "token": "<jwt>", "user": { "id": 1, "name": "Jane", "email": "jane@example.com" } }
+{
+  "token": "<jwt>",
+  "user": {
+    "id": 1,
+    "name": "Jane",
+    "email": "jane@example.com"
+  }
+}
 ```
 
-### Expenses
+---
+
+### 💰 Expenses
+
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/expenses/` | List all expenses (filterable by `month`, `category`) |
-| POST | `/api/expenses/` | Add a new expense |
+|------|------|------|
+| GET | `/api/expenses` | List all expenses |
+| POST | `/api/expenses` | Add a new expense |
 | PUT | `/api/expenses/<id>` | Update an expense |
 | DELETE | `/api/expenses/<id>` | Delete an expense |
-| POST | `/api/expenses/categorize` | AI-categorize a title/notes |
-| GET | `/api/expenses/insights` | Spending insights & summaries |
+| POST | `/api/expenses/categorize` | Get AI category suggestion |
+| GET | `/api/expenses/insights` | Spending insights and analytics |
 
-**Add expense body:**
+Example expense request:
+
 ```json
 {
   "title": "Lunch at Zomato",
   "amount": 350.00,
-  "category": "",        // leave empty for AI auto-categorization
+  "category": "",
   "date": "2024-01-15",
   "notes": "Team lunch"
 }
 ```
 
-**Insights response:**
+Example insights response:
+
 ```json
 {
   "total": 12500.00,
   "count": 45,
   "by_category": [
-    { "category": "Food & Dining", "amount": 4200.00, "percent": 33.6 }
+    {
+      "category": "Food & Dining",
+      "amount": 4200.00,
+      "percent": 33.6
+    }
   ],
   "monthly": [
-    { "month": "2024-01", "amount": 6200.00 }
+    {
+      "month": "2024-01",
+      "amount": 6200.00
+    }
   ]
 }
 ```
+---
+
+## 🧠 AI Workflow
+
+Expense Title → TF-IDF Vectorization → Naive Bayes Model → Category Prediction → Confidence Check
+
+- If confidence ≥ 40% → ML prediction used
+- If confidence < 40% → Rule-based fallback categorization
+
 
 ---
 
-## AI Categorization
+## ⚙️ Project Structure
 
-The categorizer uses a keyword-scoring rule engine. It analyzes the expense title and notes against 12 categories:
-
-- 🍽️ Food & Dining
-- 🚗 Transport
-- 🛍️ Shopping
-- 💊 Healthcare
-- 🎬 Entertainment
-- 📚 Education
-- 💡 Bills & Utilities
-- ✨ Personal Care
-- ✈️ Travel
-- 📈 Investments
-- 🎁 Gifts & Donations
-- 📦 Other
-
-Longer, more specific keywords score higher. The highest-scoring category wins. If no keywords match, it defaults to "Other".
-
-The frontend also calls the `/api/expenses/categorize` endpoint as you type the expense title, showing a live AI suggestion.
-
----
-
-## Features
-
-- ✅ User authentication (JWT-based)
-- ✅ Add, edit, delete expenses
-- ✅ AI-powered auto-categorization as you type
-- ✅ Dashboard with spending stats
-- ✅ Category-wise donut chart
-- ✅ Monthly spending trend bar chart
-- ✅ Filter by month and category
-- ✅ Spending insights with percentages
-- ✅ Fully responsive single-page UI
-
----
-
-## Environment Variables (optional)
-
-Create a `.env` file inside `backend/`:
 ```
-JWT_SECRET_KEY=your-very-secret-key-here
+spendsense/
+│
+├── backend/
+│   ├── app.py                      # Flask application entry point
+│   ├── requirements.txt            # Python dependencies
+│   ├── expenses.db                 # SQLite database (auto-created on first run)
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── models.py               # SQLAlchemy models (User, Expense)
+│   │
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth.py                 # Authentication APIs (signup, login)
+│   │   └── expenses.py             # Expense CRUD operations & insights APIs
+│   │
+│   └── utils/
+│       ├── categorizer.py          # Rule-based expense categorization logic
+│       ├── train_model.py          # Script to train ML categorization model
+│       └── model.pkl               # Trained machine learning model
+│
+├── frontend/
+│   └── index.html                  # Single-page React interface (CDN-based)
+│
+├── screenshots/                    # UI screenshots for README
+│   ├── auth.png
+│   ├── dashboard.png
+│   ├── expenses.png
+│   └── insights.png
+│
+├── .gitignore                      # Ignored files (venv, cache, env files)
+└── README.md                       # Project documentation
 ```
-
-If not set, a default development key is used.
 
 ---
 
-## Tech Stack
+## 🔧 Setup Instructions (Local)
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python, Flask 3, Flask-JWT-Extended |
-| Database | SQLite (via SQLAlchemy ORM) |
-| Auth | JWT (JSON Web Tokens) + bcrypt hashing |
-| Frontend | React 18 (CDN), Chart.js |
-| AI | Rule-based keyword scoring categorizer |
+Follow these steps to run the project locally.
+
+---
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/kamalsharma001/spendsense.git
+cd spendsense
+```
+
+---
+
+### 2️⃣ Backend Setup
+
+Navigate to the backend folder and create a virtual environment.
+
+```bash
+cd backend
+python -m venv venv
+```
+
+Activate the virtual environment.
+
+**Windows**
+
+```bash
+venv\Scripts\activate
+```
+
+**Mac / Linux**
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies and start the backend server.
+
+```bash
+pip install -r requirements.txt
+python utils/train_model.py
+python app.py
+```
+
+The backend will start at:
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+### 3️⃣ Run the Frontend
+
+Open a new terminal and run:
+
+```bash
+cd frontend
+python -m http.server 3000
+```
+
+Then open your browser and go to:
+
+```
+http://localhost:3000
+```
+
+The application should now be running locally.
+
+---
+
+## 🚀 Deployment
+
+- **Frontend:** Netlify  
+- **Backend:** Render  
+- **Database:** PostgreSQL (Render)  
+
+---
+
+## ⚠️ Limitations
+
+- Free database has limited lifetime on free tier  
+- Backend may experience cold start delay  
+- ML model accuracy depends on training dataset  
+
+---
+
+## 🔮 Future Improvements
+
+- 📱 Mobile application version  
+- 🔔 Budget alerts & notifications  
+- 📤 Export reports (PDF / Excel)  
+- 🧠 Advanced ML categorization models  
+- 👥 Multi-user financial analytics  
+
+---
+
+## 👨‍💻 Author
+
+**Kamal Sharma**  
+B.E. Computer Science Engineering (AI & ML)  
+Chandigarh University  
+
+📧 sharmakamal1210@gmail.com  
+🌐 GitHub: [kamalsharma001](https://github.com/kamalsharma001)
+---
