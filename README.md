@@ -1,6 +1,8 @@
 # SpendSense — AI Powered Expense Tracker
 
-A full-stack premium expense intelligence console with automatic machine learning categorization. Refactored from Flask to a high-speed **FastAPI** backend and structured into a modular **Vite + React** frontend with Apple-like aesthetics, transitions, and dark/light themes.
+A full-stack premium expense intelligence console with automatic machine learning categorization. Developed with a high-speed **FastAPI** backend and structured into a modular **Vite + React** frontend with Apple-like aesthetics, transitions, and dark/light themes.
+
+🌐 **Live Demo Console**: [spendsense-xyz.netlify.app](https://spendsense-xyz.netlify.app/)
 
 ---
 
