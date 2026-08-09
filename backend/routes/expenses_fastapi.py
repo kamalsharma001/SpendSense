@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, date as date_type
 from collections import defaultdict
@@ -12,23 +12,24 @@ from utils.categorizer import categorize_expense
 
 router = APIRouter(prefix="/api/expenses", tags=["expenses"])
 
+# Pydantic validation models with security constraints
 class ExpenseCreate(BaseModel):
-    title: str
-    amount: float
-    category: Optional[str] = None
-    date: Optional[str] = None
-    notes: Optional[str] = ""
+    title: str = Field(..., min_length=1, max_length=150)
+    amount: float = Field(..., gt=0, lt=1000000000)
+    category: Optional[str] = Field(None, max_length=100)
+    date: Optional[str] = Field(None, max_length=10)
+    notes: Optional[str] = Field("", max_length=500)
 
 class ExpenseUpdate(BaseModel):
-    title: Optional[str] = None
-    amount: Optional[float] = None
-    category: Optional[str] = None
-    date: Optional[str] = None
-    notes: Optional[str] = None
+    title: Optional[str] = Field(None, max_length=150)
+    amount: Optional[float] = Field(None, gt=0, lt=1000000000)
+    category: Optional[str] = Field(None, max_length=100)
+    date: Optional[str] = Field(None, max_length=10)
+    notes: Optional[str] = Field(None, max_length=500)
 
 class CategorizeRequest(BaseModel):
-    title: str
-    notes: Optional[str] = ""
+    title: str = Field(..., max_length=150)
+    notes: Optional[str] = Field("", max_length=500)
 
 def parse_date(date_str):
     if not date_str:

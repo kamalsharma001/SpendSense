@@ -3,9 +3,15 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Float, Date, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+from dotenv import load_dotenv
 
-DEFAULT_DB_URL = "postgresql://neondb_owner:npg_K9nUF4omRiIQ@ep-nameless-rain-aytkowvl-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+# Load environmental variables from .env
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    sqlite_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'expenses.db')
+    DATABASE_URL = f"sqlite:///{sqlite_path}"
 
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)

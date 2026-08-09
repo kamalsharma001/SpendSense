@@ -1,6 +1,6 @@
 # SpendSense — AI Powered Expense Tracker
 
-A full-stack premium expense intelligence console with automatic machine learning categorization. Structured into a high-speed **FastAPI** backend and a modular **Vite + React** single-page application styled in a gorgeous, Apple-inspired **neon green & emerald** theme.
+A full-stack premium expense intelligence console with automatic machine learning categorization. Refactored from Flask to a high-speed **FastAPI** backend and structured into a modular **Vite + React** frontend with Apple-like aesthetics, transitions, and dark/light themes.
 
 ---
 
@@ -8,15 +8,19 @@ A full-stack premium expense intelligence console with automatic machine learnin
 
 ```
 SpendSense/
+├── .python-version             # Pins python version (3.12) for root deploy engines
+├── runtime.txt                 # Specifies python version (python-3.12.8)
 ├── backend/
 │   ├── app.py                  # FastAPI application entry point (Port 8000)
-│   ├── .env                    # Environment credentials file (Hides DB and secret keys)
 │   ├── requirements.txt        # Python FastAPI dependencies
 │   ├── expenses.db             # SQLite database (Auto-created local fallback)
+│   ├── .env                    # Private credentials config (Git ignored)
+│   ├── .python-version         # Pins python version (3.12) for backend
+│   ├── runtime.txt             # Specifies python version (python-3.12.8)
 │   ├── models/
 │   │   └── models.py           # Native SQLAlchemy User & Expense schemas (Resilient failover)
 │   ├── routes/
-│   │   ├── auth_fastapi.py     # JWT Auth, user session, forgot & reset password routers (Val. bounds)
+│   │   ├── auth_fastapi.py     # JWT Auth, user session, forgot & reset password routers
 │   │   └── expenses_fastapi.py # CRUD, public sandbox categorization, & insights telemetry
 │   └── utils/
 │       ├── categorizer.py      # TF-IDF + Naive Bayes ML categorizer pipeline
@@ -25,14 +29,14 @@ SpendSense/
 └── frontend/
     ├── index.html              # Clean Vite template loading entrypoint
     ├── public/
-    │   └── favicon.svg         # Consistent brand logo SVG (Neon green themed)
+    │   └── favicon.svg         # Consistent glowing brand logo SVG (Neon Green)
     ├── package.json            # React, Chart.js, and Lucide icon dev packages
     ├── vite.config.js          # Vite compiling configurations
     └── src/
         ├── main.jsx            # React root mount entrypoint
-        ├── App.jsx             # HTML5 Path router, protected route guards, Razorpay unlock overlay
+        ├── App.jsx             # HTML5 path router, protected guards, Razorpay unlock overlay
         ├── App.css             # Cleared boilerplate stylesheet
-        ├── index.css           # Neon green theme variables, Apple glassmorphic rules, and animations
+        ├── index.css           # Premium neon green/emerald theme system and keyframe animations
         └── components/
             ├── LandingPage.jsx # Hero page featuring animated particle background and public ML Sandbox
             ├── TopBar.jsx      # Glassmorphic top navigation header with obvious Sign Out button
@@ -40,36 +44,14 @@ SpendSense/
             ├── Dashboard.jsx   # Spend summary gauge, monthly trends, and transaction stack
             ├── ExpensesPage.jsx# Searchable database lists, filter dropdowns, and modal logging
             ├── InsightsPage.jsx# Analytical radar segments, comparative horizontal bars, and totals
-            └── NotFoundPage.jsx# Fallback coordinate route (404 page with 5s home redirect countdown)
+            └── NotFoundPage.jsx# Fallback coordinate route (404 page) with 5s countdown
 ```
 
 ---
 
-## Prerequisites
+## Setup & Run (Local Development)
 
-- **Python 3.12+**
-- **Node.js 18+** & **npm**
-- A modern web browser supporting CSS grid, filters, and standard WebGL.
-
----
-
-## Setup & Run
-
-### 1. Environment Configuration
-
-Create a file named `.env` in the `backend/` directory:
-
-```env
-# Database connection string (default uses serverless Neon Postgres)
-DATABASE_URL=postgresql://neondb_owner:npg_K9nUF4omRiIQ@ep-nameless-rain-aytkowvl-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-
-# Hashing secret key for JWT token signatures
-JWT_SECRET_KEY=your-custom-secure-token-hash-key
-```
-
----
-
-### 2. Backend Server Setup (Port 8000)
+### 1. Backend Server Setup (Port 8000)
 
 ```bash
 cd backend
@@ -86,17 +68,21 @@ venv\Scripts\Activate.ps1
 # Install requirements
 pip install -r requirements.txt
 
+# Create a .env file with your credentials:
+# DATABASE_URL=postgresql://user:password@host/db
+# JWT_SECRET_KEY=your-secure-secret-key-here
+
 # Start the FastAPI application
 python app.py
 ```
 
 Uvicorn will spin up at **`http://localhost:8000`**. You can inspect the Swagger interactive testing panel at **`http://localhost:8000/docs`**.
 
-> **Note on Resilient Database Failover**: The app connects by default to the remote Postgres DB provided in your `.env` file. If the network is offline or database connection fails, it automatically falls back to a local SQLite database (`expenses.db`), preventing startup crashes.
+> **Note on Resilient Database Failover**: The app connects by default to the Postgres URL specified in `.env`. If it runs in an offline container or is unable to reach the host, it automatically logs a warning and falls back to a local SQLite (`expenses.db`) instance, guaranteeing zero startup crashes.
 
 ---
 
-### 3. Frontend Development Server Setup (Port 5173)
+### 2. Frontend Development Server Setup (Port 5173)
 
 Open a new terminal window:
 
@@ -114,24 +100,58 @@ The compiled application console will launch at **`http://127.0.0.1:5173/`**.
 
 ---
 
-## Security Implementation Checklists
+## Production Deployment Guidelines
 
-- 🔒 **Credentials Separation**: Hides sensitive PostgreSQL host links and hashing secrets inside a git-ignored [`.env`](file:///c:/Users/sharm/Downloads/Projects/SpendSense/backend/.env) file.
-- 🌐 **Restricted CORS Policy**: Explicitly locks origin validation to the production deployment domain `https://spendsense-xyz.netlify.app` and local dev testing ports.
-- 🛡️ **SQL Injection Protection**: All backend transactions use SQLAlchemy ORM parameterized statements, preventing raw SQL string interpolations.
-- 📏 **Input Length Validation**: Enforces strict Pydantic `Field(max_length=X)` size constraints on payload titles, emails, passwords, and tokens to block overflow and buffer-bloat denial-of-service vectors.
-- 🚀 **Security HTTP Headers**: Integrates an intercepting middleware in FastAPI injecting XSS and frame hijacking defense headers:
-  * `X-Frame-Options: DENY` (anti-clickjacking)
-  * `X-XSS-Protection: 1; mode=block` (script blocking)
-  * `X-Content-Type-Options: nosniff` (anti-mime hijacking)
-  * `Referrer-Policy: strict-origin-when-cross-origin`
+### 1. Frontend (Deploy to Netlify)
+1. Build the production assets:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. This creates a `dist/` directory containing fully optimized, static HTML, JS, and CSS files.
+3. Configure a Netlify routing rule to support the HTML5 History API. Create a `_redirects` file inside `frontend/public/` containing:
+   ```text
+   /*    /index.html   200
+   ```
+4. Deploy the contents of the `dist/` folder directly to Netlify.
+
+### 2. Backend (Deploy to Render / Railway)
+1. Define the following Environment Variables in your hosting console:
+   * `DATABASE_URL`: Connection string of your production Neon/PostgreSQL database.
+   * `JWT_SECRET_KEY`: A long cryptographic string for secure token signatures.
+   * `PYTHON_VERSION`: Set to `3.12.8` (Pins the runtime version to prevent Rust/Cargo wheel mismatch compilation errors).
+2. Set the startup command to:
+   ```bash
+   uvicorn app:app --host 0.0.0.0 --port 8000
+   ```
+3. The codebase contains `.python-version` and `runtime.txt` configuration files to automatically force the build pipelines to run on Python 3.12.
 
 ---
 
-## Core Visual Features
+## Technical Specifications & Security Integrations
 
-- 🟢 **Vibrant Neon Green theme**: High-end cyberpunk-inspired visual systems featuring charcoal background canvas orbits, glowing accent widgets, and glassmorphic card grids.
-- 🗺️ **HTML5 History API Routing**: A pure, hash-free single page router managing standard direct browser endpoints (`/`, `/login`, `/dashboard`, `/expenses`, `/insights`).
-- ⏱️ **Redirection 404 Interceptor**: Renders an alert shield alongside a real-time countdown timer that automatically redirects back to the homepage after 5 seconds.
-- 💸 **SVG Budget Dial Gauge**: A custom circular expenditure outline that shrinks and shifts color based on spending reach limits.
-- 💳 **Razorpay Success Unlock**: Green circular drawing ticks, loading indicators, and text slide-ins unlocking dashboards upon successful authentication.
+### Security Check Implementations
+* 🛡️ **SQL Injection Prevention**: Built entirely on **SQLAlchemy ORM** using prepared statements and automatic parameter binding. No raw SQL queries are evaluated.
+* 🔒 **Parameter Validation (Pydantic Field Constraints)**: Constrained input lengths on user registration, login credentials, and expense fields to reject malformed data payloads or DoS buffer attacks.
+* 🌐 **Secure CORS Headers Configuration**: Restriced CORS origins in `app.py` exclusively to `https://spendsense-xyz.netlify.app/` and local dev ports.
+* 🧱 **Response Security Headers**: A dynamic FastAPI middleware automatically injects headers on every response:
+  * `X-Frame-Options: DENY` (Clickjacking protection)
+  * `X-XSS-Protection: 1; mode=block` (Cross-Site Scripting protection)
+  * `X-Content-Type-Options: nosniff` (MIME Sniffing protection)
+
+### Design & Architecture
+* 🟢 **Neon Green / Emerald Theme**: Ambient forest gradients, responsive card glow systems, and modern Google Fonts (**Outfit** and **Space Grotesk**).
+* 🌓 **Dynamic Theme Toggling**: Responsive dark mode (default) and light mode toggleable at every stage.
+* 🗺️ **HTML5 History API Routing**: Uses direct path routing (`/`, `/login`, `/dashboard`) instead of hash values, with automatic 5-second countdown redirections on 404 pages.
+
+---
+
+## 👨💻 Author
+
+**Kamal Sharma**  
+B.E. Computer Science Engineering (AI & ML)  
+Chandigarh University  
+
+📧 sharmakamal1210@gmail.com  
+🌐 GitHub: [kamalsharma001](https://github.com/kamalsharma001)
+---

@@ -161,7 +161,7 @@ export default function AuthPage({ API, onLogin, theme, toggleTheme }) {
             </span>
           </div>
           <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-            // SECURED ACCESS ENVIRONMENT
+            // ai-powered finance intelligence
           </p>
         </div>
 

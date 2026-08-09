@@ -1,17 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field
 from typing import Optional
 import os
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.models import SessionLocal, User
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from dotenv import load_dotenv
+
+# Load credentials from .env
+load_dotenv()
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer()
 
-SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'super-secret-key-change-in-prod')
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'super-secret-key-change-in-prod-neon-spendsense-99')
 ALGORITHM = "HS256"
 
 # Helper database dependency
@@ -22,23 +26,23 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic Schemas
+# Pydantic Schemas with Security Constraints
 class SignUpRequest(BaseModel):
-    name: str
-    email: str
-    password: str
+    name: str = Field(..., min_length=1, max_length=100)
+    email: str = Field(..., min_length=3, max_length=150)
+    password: str = Field(..., min_length=6, max_length=100)
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: str = Field(..., min_length=3, max_length=150)
+    password: str = Field(..., min_length=6, max_length=100)
 
 class ForgotPasswordRequest(BaseModel):
-    email: str
+    email: str = Field(..., min_length=3, max_length=150)
 
 class ResetPasswordRequest(BaseModel):
-    email: str
-    token: str
-    new_password: str
+    email: str = Field(..., min_length=3, max_length=150)
+    token: str = Field(..., min_length=1, max_length=100)
+    new_password: str = Field(..., min_length=6, max_length=100)
 
 # Token Helpers
 def create_access_token(user_id: int):
