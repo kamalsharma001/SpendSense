@@ -1,325 +1,137 @@
-# 💰 SpendSense — AI Expense Tracker
+# SpendSense — AI Powered Expense Tracker
 
-An AI-assisted expense tracking system with intelligent categorization and real-time financial insights.
-
-SpendSense is a full-stack AI-assisted expense tracking application that helps users manage and analyze their finances intelligently. It combines machine learning with interactive dashboards to provide automatic expense categorization and meaningful insights into spending habits.
+A full-stack premium expense intelligence console with automatic machine learning categorization. Structured into a high-speed **FastAPI** backend and a modular **Vite + React** single-page application styled in a gorgeous, Apple-inspired **neon green & emerald** theme.
 
 ---
 
-## 🚀 Live Demo
-
-🌐 **Frontend:** [SpendSense App](https://spendsense-xyz.netlify.app)  
-🔗 **Backend API:** [API Endpoint](https://spendsense-backend-hinw.onrender.com)
-
-The application is fully deployed and accessible through the live demo links above.
-
----
-
-## 📸 Screenshots
-
-### 🔐 Authentication Page
-![Auth](screenshots/Auth.png)
-
-### 📊 Dashboard
-![Dashboard](screenshots/Dashboard.png)
-
-### 🧾 Expenses Page
-![Expenses](screenshots/Expenses.png)
-
-### 📈 Insights
-![Insights](screenshots/Insights.png)
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- HTML  
-- CSS  
-- JavaScript  
-- React (CDN)  
-- Chart.js  
-
-### Backend
-- Python (Flask)  
-- REST API architecture  
-- JWT Authentication  
-
-### Database
-- PostgreSQL (Render — Production)  
-- SQLite (Local Development)  
-
-### Machine Learning
-- Scikit-learn  
-- TF-IDF Vectorizer  
-- Naive Bayes Classifier  
-
----
-
-## ✨ Features
-
-- 🔐 User Authentication (Signup / Login)  
-- 💰 Add, Edit, Delete Expenses  
-- 🔎 Search & Filter Expenses  
-- 🤖 AI-assisted Expense Categorization  
-- 📊 Interactive Dashboard & Charts  
-- 📈 Spending Insights & Analytics  
-- ☁️ Fully Deployed (Frontend + Backend + Database)  
-
----
-## 🔌 REST API Overview
-
-All endpoints require the header:
+## Project Structure
 
 ```
-Authorization: Bearer <token>
-```
-
-except authentication routes.
-
----
-
-### 🔐 Authentication
-
-| Method | Endpoint | Description |
-|------|------|------|
-| POST | `/api/auth/signup` | Register a new user |
-| POST | `/api/auth/login` | Login and receive JWT token |
-
-Example signup request:
-
-```json
-{
-  "name": "Jane",
-  "email": "jane@example.com",
-  "password": "secret123"
-}
-```
-
-Example login request:
-
-```json
-{
-  "email": "jane@example.com",
-  "password": "secret123"
-}
-```
-
-Example response:
-
-```json
-{
-  "token": "<jwt>",
-  "user": {
-    "id": 1,
-    "name": "Jane",
-    "email": "jane@example.com"
-  }
-}
-```
-
----
-
-### 💰 Expenses
-
-| Method | Endpoint | Description |
-|------|------|------|
-| GET | `/api/expenses` | List all expenses |
-| POST | `/api/expenses` | Add a new expense |
-| PUT | `/api/expenses/<id>` | Update an expense |
-| DELETE | `/api/expenses/<id>` | Delete an expense |
-| POST | `/api/expenses/categorize` | Get AI category suggestion |
-| GET | `/api/expenses/insights` | Spending insights and analytics |
-
-Example expense request:
-
-```json
-{
-  "title": "Lunch at Zomato",
-  "amount": 350.00,
-  "category": "",
-  "date": "2024-01-15",
-  "notes": "Team lunch"
-}
-```
-
-Example insights response:
-
-```json
-{
-  "total": 12500.00,
-  "count": 45,
-  "by_category": [
-    {
-      "category": "Food & Dining",
-      "amount": 4200.00,
-      "percent": 33.6
-    }
-  ],
-  "monthly": [
-    {
-      "month": "2024-01",
-      "amount": 6200.00
-    }
-  ]
-}
-```
----
-
-## 🧠 AI Workflow
-
-Expense Title → TF-IDF Vectorization → Naive Bayes Model → Category Prediction → Confidence Check
-
-- If confidence ≥ 40% → ML prediction used
-- If confidence < 40% → Rule-based fallback categorization
-
-
----
-
-## ⚙️ Project Structure
-
-```
-spendsense/
-│
+SpendSense/
 ├── backend/
-│   ├── app.py                      # Flask application entry point
-│   ├── requirements.txt            # Python dependencies
-│   ├── expenses.db                 # SQLite database (auto-created on first run)
-│   │
+│   ├── app.py                  # FastAPI application entry point (Port 8000)
+│   ├── .env                    # Environment credentials file (Hides DB and secret keys)
+│   ├── requirements.txt        # Python FastAPI dependencies
+│   ├── expenses.db             # SQLite database (Auto-created local fallback)
 │   ├── models/
-│   │   ├── __init__.py
-│   │   └── models.py               # SQLAlchemy models (User, Expense)
-│   │
+│   │   └── models.py           # Native SQLAlchemy User & Expense schemas (Resilient failover)
 │   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── auth.py                 # Authentication APIs (signup, login)
-│   │   └── expenses.py             # Expense CRUD operations & insights APIs
-│   │
+│   │   ├── auth_fastapi.py     # JWT Auth, user session, forgot & reset password routers (Val. bounds)
+│   │   └── expenses_fastapi.py # CRUD, public sandbox categorization, & insights telemetry
 │   └── utils/
-│       ├── categorizer.py          # Rule-based expense categorization logic
-│       ├── train_model.py          # Script to train ML categorization model
-│       └── model.pkl               # Trained machine learning model
+│       ├── categorizer.py      # TF-IDF + Naive Bayes ML categorizer pipeline
+│       └── model.pkl           # Trained classification model binaries
 │
-├── frontend/
-│   └── index.html                  # Single-page React interface (CDN-based)
-│
-├── screenshots/                    # UI screenshots for README
-│   ├── auth.png
-│   ├── dashboard.png
-│   ├── expenses.png
-│   └── insights.png
-│
-├── .gitignore                      # Ignored files (venv, cache, env files)
-└── README.md                       # Project documentation
+└── frontend/
+    ├── index.html              # Clean Vite template loading entrypoint
+    ├── public/
+    │   └── favicon.svg         # Consistent brand logo SVG (Neon green themed)
+    ├── package.json            # React, Chart.js, and Lucide icon dev packages
+    ├── vite.config.js          # Vite compiling configurations
+    └── src/
+        ├── main.jsx            # React root mount entrypoint
+        ├── App.jsx             # HTML5 Path router, protected route guards, Razorpay unlock overlay
+        ├── App.css             # Cleared boilerplate stylesheet
+        ├── index.css           # Neon green theme variables, Apple glassmorphic rules, and animations
+        └── components/
+            ├── LandingPage.jsx # Hero page featuring animated particle background and public ML Sandbox
+            ├── TopBar.jsx      # Glassmorphic top navigation header with obvious Sign Out button
+            ├── AuthPage.jsx    # Login, signup, forgot password, and reset credential forms
+            ├── Dashboard.jsx   # Spend summary gauge, monthly trends, and transaction stack
+            ├── ExpensesPage.jsx# Searchable database lists, filter dropdowns, and modal logging
+            ├── InsightsPage.jsx# Analytical radar segments, comparative horizontal bars, and totals
+            └── NotFoundPage.jsx# Fallback coordinate route (404 page with 5s home redirect countdown)
 ```
 
 ---
 
-## 🔧 Setup Instructions (Local)
+## Prerequisites
 
-Follow these steps to run the project locally.
+- **Python 3.12+**
+- **Node.js 18+** & **npm**
+- A modern web browser supporting CSS grid, filters, and standard WebGL.
 
 ---
 
-### 1️⃣ Clone the Repository
+## Setup & Run
 
-```bash
-git clone https://github.com/kamalsharma001/spendsense.git
-cd spendsense
+### 1. Environment Configuration
+
+Create a file named `.env` in the `backend/` directory:
+
+```env
+# Database connection string (default uses serverless Neon Postgres)
+DATABASE_URL=postgresql://neondb_owner:npg_K9nUF4omRiIQ@ep-nameless-rain-aytkowvl-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+# Hashing secret key for JWT token signatures
+JWT_SECRET_KEY=your-custom-secure-token-hash-key
 ```
 
 ---
 
-### 2️⃣ Backend Setup
-
-Navigate to the backend folder and create a virtual environment.
+### 2. Backend Server Setup (Port 8000)
 
 ```bash
 cd backend
+
+# Create a virtual environment
 python -m venv venv
-```
 
-Activate the virtual environment.
-
-**Windows**
-
-```bash
-venv\Scripts\activate
-```
-
-**Mac / Linux**
-
-```bash
+# Activate the environment
+# On macOS/Linux:
 source venv/bin/activate
-```
+# On Windows (PowerShell):
+venv\Scripts\Activate.ps1
 
-Install dependencies and start the backend server.
-
-```bash
+# Install requirements
 pip install -r requirements.txt
-python utils/train_model.py
+
+# Start the FastAPI application
 python app.py
 ```
 
-The backend will start at:
+Uvicorn will spin up at **`http://localhost:8000`**. You can inspect the Swagger interactive testing panel at **`http://localhost:8000/docs`**.
 
-```
-http://127.0.0.1:5000
-```
+> **Note on Resilient Database Failover**: The app connects by default to the remote Postgres DB provided in your `.env` file. If the network is offline or database connection fails, it automatically falls back to a local SQLite database (`expenses.db`), preventing startup crashes.
 
 ---
 
-### 3️⃣ Run the Frontend
+### 3. Frontend Development Server Setup (Port 5173)
 
-Open a new terminal and run:
+Open a new terminal window:
 
 ```bash
 cd frontend
-python -m http.server 3000
+
+# Install Node modules
+npm install
+
+# Run the Vite compiler in watch mode
+npm run dev
 ```
 
-Then open your browser and go to:
-
-```
-http://localhost:3000
-```
-
-The application should now be running locally.
+The compiled application console will launch at **`http://127.0.0.1:5173/`**.
 
 ---
 
-## 🚀 Deployment
+## Security Implementation Checklists
 
-- **Frontend:** Netlify  
-- **Backend:** Render  
-- **Database:** PostgreSQL (Render)  
-
----
-
-## ⚠️ Limitations
-
-- Free database has limited lifetime on free tier  
-- Backend may experience cold start delay  
-- ML model accuracy depends on training dataset  
+- 🔒 **Credentials Separation**: Hides sensitive PostgreSQL host links and hashing secrets inside a git-ignored [`.env`](file:///c:/Users/sharm/Downloads/Projects/SpendSense/backend/.env) file.
+- 🌐 **Restricted CORS Policy**: Explicitly locks origin validation to the production deployment domain `https://spendsense-xyz.netlify.app` and local dev testing ports.
+- 🛡️ **SQL Injection Protection**: All backend transactions use SQLAlchemy ORM parameterized statements, preventing raw SQL string interpolations.
+- 📏 **Input Length Validation**: Enforces strict Pydantic `Field(max_length=X)` size constraints on payload titles, emails, passwords, and tokens to block overflow and buffer-bloat denial-of-service vectors.
+- 🚀 **Security HTTP Headers**: Integrates an intercepting middleware in FastAPI injecting XSS and frame hijacking defense headers:
+  * `X-Frame-Options: DENY` (anti-clickjacking)
+  * `X-XSS-Protection: 1; mode=block` (script blocking)
+  * `X-Content-Type-Options: nosniff` (anti-mime hijacking)
+  * `Referrer-Policy: strict-origin-when-cross-origin`
 
 ---
 
-## 🔮 Future Improvements
+## Core Visual Features
 
-- 📱 Mobile application version  
-- 🔔 Budget alerts & notifications  
-- 📤 Export reports (PDF / Excel)  
-- 🧠 Advanced ML categorization models  
-- 👥 Multi-user financial analytics  
-
----
-
-## 👨‍💻 Author
-
-**Kamal Sharma**  
-B.E. Computer Science Engineering (AI & ML)  
-Chandigarh University  
-
-📧 sharmakamal1210@gmail.com  
-🌐 GitHub: [kamalsharma001](https://github.com/kamalsharma001)
----
+- 🟢 **Vibrant Neon Green theme**: High-end cyberpunk-inspired visual systems featuring charcoal background canvas orbits, glowing accent widgets, and glassmorphic card grids.
+- 🗺️ **HTML5 History API Routing**: A pure, hash-free single page router managing standard direct browser endpoints (`/`, `/login`, `/dashboard`, `/expenses`, `/insights`).
+- ⏱️ **Redirection 404 Interceptor**: Renders an alert shield alongside a real-time countdown timer that automatically redirects back to the homepage after 5 seconds.
+- 💸 **SVG Budget Dial Gauge**: A custom circular expenditure outline that shrinks and shifts color based on spending reach limits.
+- 💳 **Razorpay Success Unlock**: Green circular drawing ticks, loading indicators, and text slide-ins unlocking dashboards upon successful authentication.
