@@ -7,7 +7,7 @@ import ExpensesPage from './components/ExpensesPage';
 import InsightsPage from './components/InsightsPage';
 import NotFoundPage from './components/NotFoundPage';
 
-const API = 'http://localhost:8000'; // FastAPI default port
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // Dynamic API endpoint
 
 export default function App() {
   const [user, setUser] = React.useState(null);
