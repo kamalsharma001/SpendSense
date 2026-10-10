@@ -18,14 +18,17 @@ if DATABASE_URL.startswith("postgres://"):
 
 connect_args = {}
 if "sqlite" in DATABASE_URL:
-    connect_args = {"check_same_thread": False}
+    engine_kwargs = {"connect_args": {"check_same_thread": False}}
 else:
-    # Pass connection timeout to psycopg2
-    connect_args = {"connect_timeout": 3}
+    engine_kwargs = {
+        "connect_args": {"connect_timeout": 10},
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
 # Attempt connection to Postgres, fallback to SQLite on failure (e.g. offline dev environments)
 try:
-    temp_engine = create_engine(DATABASE_URL, connect_args=connect_args)
+    temp_engine = create_engine(DATABASE_URL, **engine_kwargs)
     with temp_engine.connect() as conn:
         pass
     engine = temp_engine

@@ -7,7 +7,11 @@ import ExpensesPage from './components/ExpensesPage';
 import InsightsPage from './components/InsightsPage';
 import NotFoundPage from './components/NotFoundPage';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // Dynamic API endpoint
+const API = import.meta.env.VITE_API_URL || (
+  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000'
+    : 'https://spendsense-backend-hinw.onrender.com'
+);
 
 export default function App() {
   const [user, setUser] = React.useState(null);
