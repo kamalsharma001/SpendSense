@@ -1,8 +1,14 @@
 import React from 'react';
 import { ShieldCheck, Eye, EyeOff, Key, Sparkles, Sun, Moon, ArrowLeft } from 'lucide-react';
 
-export default function AuthPage({ API, onLogin, theme, toggleTheme }) {
-  const [tab, setTab] = React.useState('login'); // login, signup, forgot, reset
+export default function AuthPage({ API, onLogin, theme, toggleTheme, initialTab }) {
+  const [tab, setTab] = React.useState(initialTab || 'login'); // login, signup, forgot, reset
+
+  React.useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
   const [form, setForm] = React.useState({ name: '', email: '', password: '', token: '', newPassword: '' });
   const [error, setError] = React.useState('');
   const [message, setMessage] = React.useState('');

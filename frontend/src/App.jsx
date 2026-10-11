@@ -83,7 +83,7 @@ export default function App() {
     if (!checkedAuth) return;
 
     const path = currentPath || '/';
-    const isAuthRoute = ['/login', '/signup'].includes(path);
+    const isAuthRoute = ['/login', '/signup', '/register'].includes(path);
     const isProtectedRoute = ['/dashboard', '/expenses', '/insights'].includes(path);
 
     if (!user && isProtectedRoute) {
@@ -149,10 +149,11 @@ export default function App() {
       );
     }
 
-    if (path === '/login' || path === '/signup') {
+    if (path === '/login' || path === '/signup' || path === '/register') {
       return (
         <AuthPage 
           API={API} 
+          initialTab={(path === '/signup' || path === '/register') ? 'signup' : 'login'}
           onLogin={handleLoginSuccess} 
           theme={theme} 
           toggleTheme={toggleTheme} 

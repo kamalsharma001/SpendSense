@@ -22,6 +22,7 @@ app = FastAPI(
 
 # CORS configuration restricted to authorized domains
 origins = [
+    "https://spendsense-platform.vercel.app",
     "https://spendsense-xyz.netlify.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173"
@@ -30,7 +31,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.netlify\.app",
+    allow_origin_regex=r"https://.*\.netlify\.app|https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
